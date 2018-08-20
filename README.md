@@ -26,3 +26,6 @@ optional arguments:
                         Amount inserteded to Python token_urlsafe (Rename
                         length)
 ```
+
+## GIF Preview
+![Preview](https://i.alexflipnote.xyz/d6d663.gif)
