@@ -3,11 +3,14 @@ import shlex
 import os
 import bulkrename
 import secrets
+import json
 
 from bulkrename import argpar, question
 
 
-def renamer(exclude=[], logs=None, char=8):
+def renamer(exclude=[], logs=None, char=8, revertfile=True):
+    backup = {}
+
     for file in os.listdir():
         name = file.split(".")
         randomname = secrets.token_urlsafe(char)
@@ -21,7 +24,42 @@ def renamer(exclude=[], logs=None, char=8):
         if logs:
             print(f"Renamed {file} to {randomname}.{name[-1]}")
 
-        os.rename(file, f"{randomname}.{name[-1]}")
+        try:
+            newfilename = f"{randomname}.{name[-1]}"
+            os.rename(file, newfilename)
+            backup[file] = newfilename
+        except PermissionError:
+            print(f"Skipped {file}, permission denied")
+            pass
+
+    if revertfile:
+        with open("bulkrn_backup.json", "w") as d:
+            json.dump(backup, d)
+
+
+def reverter(filename="bulkrn_backup.json", logs=False):
+    try:
+        with open(filename, "r") as d:
+            data = json.load(d)
+    except FileNotFoundError:
+        print(f"Couldn't find any file called bulkrn_backup.json in {os.getcwd()}")
+        sys.exit(0)
+
+    for file in data:
+        if logs:
+            print(f"Reverted {file} back to {data[file]}")
+
+        try:
+            os.rename(data[file], file)
+        except FileExistsError:
+            print(f"Skipped {file}, name {data[file]} is already in the folder")
+            pass
+        except FileNotFoundError:
+            print(f"Skipped {file}, couldn't find the file")
+            pass
+
+    print("Reverted names in current folder")
+    os.remove(filename)
 
 
 def shell():
@@ -29,6 +67,8 @@ def shell():
     parser = argpar.Arguments(description="Rename multiple files in a folder to random characters")
     parser.add_argument('-v', '--version', action='store_true', help='Show the version number and exit')
     parser.add_argument('-l', '--logs', action='store_true', help='Shows which files it renames')
+    parser.add_argument('-r', '--revert', action='store_true', help='Revert the renames with a backup file inside the target')
+    parser.add_argument('-nb', '--nobackup', action='store_true', help='Prevent the script to dump a JSON backup')
     parser.add_argument('-e', '--exclude', nargs='+', help='Exclude file extensions')
     parser.add_argument('-c', '--characters', nargs='?', type=int, metavar="NUM", default=8, help='Amount inserteded to Python token_urlsafe (Rename length)')
 
@@ -50,6 +90,10 @@ def shell():
         print(bulkrename.__version__)
         sys.exit(0)
 
+    if args.revert:
+        reverter(logs=args.logs)
+        sys.exit(0)
+
     if args.exclude:
         toexclude = ", ".join(args.exclude)
         print(f"Excluding file types: {toexclude}")
@@ -59,13 +103,21 @@ def shell():
     else:
         print("Rename logs: Disabled")
 
+    nobackup = True
+    if args.nobackup:
+        nobackup = False
+        print("Backup names: Disabled")
+    else:
+        print("Backup names: Enabled")
+
     print(f"Current target: {os.getcwd()}\n")
 
     if question.query_yes_no("Are you sure you want to rename all files inside here?"):
         renamer(
             exclude=args.exclude,
             logs=args.logs,
-            char=args.characters
+            char=args.characters,
+            revertfile=nobackup
         )
     else:
         print("Stopped...")
