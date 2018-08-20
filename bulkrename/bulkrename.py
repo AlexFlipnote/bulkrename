@@ -5,7 +5,7 @@ import bulkrename
 import secrets
 import json
 
-from bulkrename import argpar, question
+from bulkrename import argpar, utils
 
 
 def renamer(exclude=[], logs=None, char=8, revertfile=True):
@@ -42,8 +42,7 @@ def reverter(filename="bulkrn_backup.json", logs=False):
         with open(filename, "r") as d:
             data = json.load(d)
     except FileNotFoundError:
-        print(f"Couldn't find any file called bulkrn_backup.json in {os.getcwd()}")
-        sys.exit(0)
+        utils.exitcode(f"Couldn't find any file called bulkrn_backup.json in {os.getcwd()}")
 
     for file in data:
         if logs:
@@ -58,8 +57,8 @@ def reverter(filename="bulkrn_backup.json", logs=False):
             print(f"Skipped {file}, couldn't find the file")
             pass
 
-    print("Reverted names in current folder")
     os.remove(filename)
+    print("Reverted names in current folder")
 
 
 def shell():
@@ -75,20 +74,17 @@ def shell():
     try:
         args = parser.parse_args(shlex.split(arguments))
     except Exception as e:
-        print(e)
-        sys.exit(0)
+        utils.exitcode(e)
 
     if args.characters:
         if not 1 <= args.characters <= 25:
-            print("You can only have a value between 1 to 25, stopped script...")
-            sys.exit(0)
+            utils.exitcode("You can only have a value between 1 to 25, stopped script...")
 
         if not args.characters == 8:
             print(f"Character length: {args.characters}")
 
     if args.version:
-        print(bulkrename.__version__)
-        sys.exit(0)
+        utils.exitcode(bulkrename.__version__)
 
     if args.revert:
         reverter(logs=args.logs)
@@ -112,7 +108,7 @@ def shell():
 
     print(f"Current target: {os.getcwd()}\n")
 
-    if question.query_yes_no("Are you sure you want to rename all files inside here?"):
+    if utils.query_yes_no("Are you sure you want to rename all files inside here?"):
         renamer(
             exclude=args.exclude,
             logs=args.logs,

@@ -1,6 +1,11 @@
 import sys
 
 
+def exitcode(message):
+    print(message)
+    sys.exit(0)
+
+
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
 
@@ -19,7 +24,7 @@ def query_yes_no(question, default="yes"):
     elif default == "no":
         prompt = " [y/N] "
     else:
-        raise ValueError("invalid default answer: '%s'" % default)
+        raise ValueError(f"Invalid default answer: {default}")
 
     while True:
         sys.stdout.write(question + prompt)
