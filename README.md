@@ -1,6 +1,9 @@
 # bulkrename
 Rename multiple files in a folder to random characters
 
+## Requirements
+Python 3.5 or up
+
 ## Install
 ```
 pip install bulkrename
